@@ -116,48 +116,85 @@ def main():
                 submitted_new_player = True
 
     # -----------------------------
-    # Step 1: Select active players
+    # Step 1: Select active players and goalkeepers
     # -----------------------------
-    st.subheader("Step 1: Select players playing this Terminko")
-    st.write("First two selected players are goalkeepers by default")
-    col_left, col_right = st.columns([4, 1])
-    with col_left:
-        selected_names = st.multiselect(
-            "✅ Active players:",
-            st.session_state.all_players,
-            default=[],
-            help="Select all players who will play this Terminko"
-        )
-    with col_right:
-        st.metric("Selected", f"{len(selected_names)}")
+    st.subheader("Step 1 & 2: Select active players and goalkeepers")
 
-    if len(selected_names) < MIN_PLAYERS:
-        st.info(f"Please select at least {MIN_PLAYERS} players to continue.")
-        return
+    active_players = []
+    gk_names = []
 
-    active_players = [p for p in st.session_state.players if p['name'] in selected_names]
+    # Header row
+    header = st.columns([0.5, 0.1, 1])
+    header[0].markdown("**Player**")
+    header[1].markdown("**Play**")
+    header[2].markdown("**GK**")
+
+    # Spacing control — makes rows tighter
+    row_style = """
+    <style>
+    .check-row {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        border-bottom: 1px solid #dddddd;
+    }
+    </style>
+    """
+    st.markdown(row_style, unsafe_allow_html=True)
+
+    for player in st.session_state.all_players:
+
+        # A container ensures the row stays aligned
+        with st.container():
+            cols = st.columns([0.5, 0.1, 1])
+            
+            with cols[1]:
+                play_key = f"play_{player}"
+                play_checked = st.checkbox("", key=play_key)
+
+            with cols[2]:
+                gk_key = f"gk_{player}"
+                gk_checked = st.checkbox(
+                    "",
+                    key=gk_key,
+                    disabled=not play_checked
+                )
+
+            with cols[0]:
+                st.markdown(f"<div class='check-row'>{player}</div>", unsafe_allow_html=True)
+
+            if play_checked:
+                active_players.append(player)
+            if gk_checked:
+                gk_names.append(player)
 
     # -----------------------------
-    # Step 2: Manually select goalkeepers
+    # Counter (how many players selected)
     # -----------------------------
-    st.subheader("Step 2: Select exactly 2 goalkeepers")
-    gk_names = st.multiselect(
-        "🧤 Goalkeepers:",
-        selected_names,
-        default=selected_names[:2],
-        help="Select exactly 2 players as goalkeepers"
-    )
+    st.metric("Selected players", len(active_players))
 
-    if len(gk_names) != 2:
-        st.info("Please select exactly 2 goalkeepers to continue.")
-        return
+
+    # Validation
+    if len(active_players) < MIN_PLAYERS:
+        st.info(f"Please select at least {MIN_PLAYERS} players.")
+        st.stop()
+
+    if len(gk_names) < 2:
+        st.info("Please tick exactly 2 goalkeepers.")
+        st.stop()
+
+    if len(gk_names) > 2:
+        st.warning("Too many goalkeepers selected. Uncheck until exactly 2 remain.")
+        st.stop()
+
+    # Convert active players into dict format (same as before)
+    active_player_dicts = [p for p in st.session_state.players if p["name"] in active_players]
 
     # -----------------------------
     # Shuffle / create teams
     # -----------------------------
     if st.button("Create teams / Shuffle") or submitted_new_player:
         submitted_new_player = False
-        t1, t2 = balance_teams(active_players, gk_names[0], gk_names[1])
+        t1, t2 = balance_teams(active_player_dicts, gk_names[0], gk_names[1])
         st.session_state.team_crni = [p["name"] for p in t1]
         st.session_state.team_bijeli = [p["name"] for p in t2]
 
