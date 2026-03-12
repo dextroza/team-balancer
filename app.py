@@ -209,11 +209,9 @@ def main():
         for idx, name in enumerate(team_list):
             p = st.session_state.player_dict[name]
             is_gk = "🧤 " if name in gk_names else ""
-            c0, c1, c2, c3 = st.columns([1, 3, 1, 2])
-            with c0:
-                st.markdown(f"{idx+1}.")
+            c1, c2, c3 = st.columns([3, 2, 2])
             with c1:
-                st.markdown(f"{is_gk}{p['name']}")
+                st.markdown(f"{idx+1}. {is_gk}{p['name']}")
             with c2:
                 st.markdown(f"{p['rating']:.2f}")
             with c3:
