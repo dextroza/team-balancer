@@ -139,15 +139,25 @@ def main():
             })
             st.session_state.player_df = pd.concat([st.session_state.player_df, new_rows], ignore_index=True)
 
-    row_height = 35
-    header_height = 38
+    st.markdown("""
+    <style>
+    .ag-row { min-height: 48px !important; }
+    .ag-cell { min-height: 48px !important; display: flex !important; align-items: center !important; cursor: pointer !important; }
+    .ag-cell-wrapper { width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; }
+    .ag-cell-value { width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+    .ag-cell-value input[type="checkbox"] { width: 24px !important; height: 24px !important; cursor: pointer !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    row_height = 48
+    header_height = 48
     edited = st.data_editor(
         st.session_state.player_df,
         key="player_editor",
         column_config={
             "Player": st.column_config.TextColumn(disabled=True),
-            "Play": st.column_config.CheckboxColumn(),
-            "GK": st.column_config.CheckboxColumn(),
+            "Play": st.column_config.CheckboxColumn(width="small"),
+            "GK": st.column_config.CheckboxColumn(width="small"),
         },
         hide_index=True,
         use_container_width=True,
