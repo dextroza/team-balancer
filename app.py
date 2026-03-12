@@ -7,6 +7,7 @@ import random
 # -----------------------------
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1w2MY5EMTdaPKpaBymqvrlekc22IOqbzSb9GbUNtHLGk/edit?gid=1634970899#gid=1634970899"
 MIN_PLAYERS = 10
+APP_TITLE = "⚽ Team Balancer2"
 
 # -----------------------------
 # Read players from Google Sheet
@@ -59,7 +60,8 @@ def calculate_total(team, player_dict):
 # Main App
 # -----------------------------
 def main():
-    st.title("⚽ Team Balancer")
+    st.set_page_config(page_title=APP_TITLE)
+    st.title(APP_TITLE)
     st.write("Reading player data from Termin google sheet")
 
     # -----------------------------
