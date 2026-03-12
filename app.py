@@ -122,19 +122,28 @@ def main():
     # -----------------------------
     st.subheader("Step 1 & 2: Select active players and goalkeepers")
 
-    selection_data = pd.DataFrame([
-        {
-            "Player": p,
-            "Play": st.session_state.get(f"play_{p}", False),
-            "GK": st.session_state.get(f"gk_{p}", False),
-        }
-        for p in st.session_state.all_players
-    ])
+    if "player_df" not in st.session_state:
+        st.session_state.player_df = pd.DataFrame({
+            "Player": st.session_state.all_players,
+            "Play": [False] * len(st.session_state.all_players),
+            "GK": [False] * len(st.session_state.all_players),
+        })
+    else:
+        existing = set(st.session_state.player_df["Player"].tolist())
+        new_players = [p for p in st.session_state.all_players if p not in existing]
+        if new_players:
+            new_rows = pd.DataFrame({
+                "Player": new_players,
+                "Play": [False] * len(new_players),
+                "GK": [False] * len(new_players),
+            })
+            st.session_state.player_df = pd.concat([st.session_state.player_df, new_rows], ignore_index=True)
 
     row_height = 35
     header_height = 38
     edited = st.data_editor(
-        selection_data,
+        st.session_state.player_df,
+        key="player_editor",
         column_config={
             "Player": st.column_config.TextColumn(disabled=True),
             "Play": st.column_config.CheckboxColumn(),
@@ -144,10 +153,6 @@ def main():
         use_container_width=True,
         height=header_height + row_height * len(st.session_state.all_players),
     )
-
-    for _, row in edited.iterrows():
-        st.session_state[f"play_{row['Player']}"] = bool(row["Play"])
-        st.session_state[f"gk_{row['Player']}"] = bool(row["GK"]) and bool(row["Play"])
 
     active_players = edited[edited["Play"]]["Player"].tolist()
     gk_names = edited[edited["GK"] & edited["Play"]]["Player"].tolist()
