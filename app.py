@@ -129,6 +129,11 @@ def main():
             "GK": [False] * len(st.session_state.all_players),
         })
     else:
+        # Remove rows not in all_players (cleanup stale/empty rows)
+        st.session_state.player_df = st.session_state.player_df[
+            st.session_state.player_df["Player"].isin(st.session_state.all_players)
+        ].reset_index(drop=True)
+        # Add any new players
         existing = set(st.session_state.player_df["Player"].tolist())
         new_players = [p for p in st.session_state.all_players if p not in existing]
         if new_players:
@@ -139,21 +144,28 @@ def main():
             })
             st.session_state.player_df = pd.concat([st.session_state.player_df, new_rows], ignore_index=True)
 
+    def save_player_selections():
+        if "player_editor" in st.session_state:
+            for row_idx, changes in st.session_state["player_editor"].get("edited_rows", {}).items():
+                for col, val in changes.items():
+                    st.session_state.player_df.at[int(row_idx), col] = val
+
+    if "player_editor" in st.session_state:
+        del st.session_state["player_editor"]
+
     st.markdown("""
     <style>
-    .ag-row { min-height: 48px !important; }
-    .ag-cell { min-height: 48px !important; display: flex !important; align-items: center !important; cursor: pointer !important; }
-    .ag-cell-wrapper { width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; }
-    .ag-cell-value { width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-    .ag-cell-value input[type="checkbox"] { width: 24px !important; height: 24px !important; cursor: pointer !important; }
+    .ag-cell { cursor: pointer !important; }
+    .ag-cell-value input[type="checkbox"] { width: 20px !important; height: 20px !important; cursor: pointer !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    row_height = 48
-    header_height = 48
-    edited = st.data_editor(
+    row_height = 35
+    header_height = 38
+    st.data_editor(
         st.session_state.player_df,
         key="player_editor",
+        on_change=save_player_selections,
         column_config={
             "Player": st.column_config.TextColumn(disabled=True),
             "Play": st.column_config.CheckboxColumn(width="small"),
@@ -161,11 +173,12 @@ def main():
         },
         hide_index=True,
         use_container_width=True,
-        height=header_height + row_height * len(st.session_state.all_players),
+        num_rows="fixed",
+        height=header_height + row_height * len(st.session_state.player_df),
     )
 
-    active_players = edited[edited["Play"]]["Player"].tolist()
-    gk_names = edited[edited["GK"] & edited["Play"]]["Player"].tolist()
+    active_players = st.session_state.player_df[st.session_state.player_df["Play"]]["Player"].tolist()
+    gk_names = st.session_state.player_df[st.session_state.player_df["GK"] & st.session_state.player_df["Play"]]["Player"].tolist()
 
     # -----------------------------
     # Counter (how many players selected)
