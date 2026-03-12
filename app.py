@@ -131,6 +131,8 @@ def main():
         for p in st.session_state.all_players
     ])
 
+    row_height = 35
+    header_height = 38
     edited = st.data_editor(
         selection_data,
         column_config={
@@ -140,6 +142,7 @@ def main():
         },
         hide_index=True,
         use_container_width=True,
+        height=header_height + row_height * len(st.session_state.all_players),
     )
 
     for _, row in edited.iterrows():
