@@ -7,7 +7,7 @@ import random
 # -----------------------------
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1w2MY5EMTdaPKpaBymqvrlekc22IOqbzSb9GbUNtHLGk/edit?gid=1634970899#gid=1634970899"
 MIN_PLAYERS = 10
-APP_TITLE = "⚽ Team Balancer2"
+APP_TITLE = "⚽ Team Balancer"
 
 # -----------------------------
 # Read players from Google Sheet
@@ -122,66 +122,32 @@ def main():
     # -----------------------------
     st.subheader("Step 1 & 2: Select active players and goalkeepers")
 
-    active_players = []
-    gk_names = []
+    selection_data = pd.DataFrame([
+        {
+            "Player": p,
+            "Play": st.session_state.get(f"play_{p}", False),
+            "GK": st.session_state.get(f"gk_{p}", False),
+        }
+        for p in st.session_state.all_players
+    ])
 
-    # Spacing control and force columns inline on mobile
-    row_style = """
-    <style>
-    .check-row {
-        padding-top: 2px;
-        padding-bottom: 2px;
-        border-bottom: 1px solid #dddddd;
-    }
-    [data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-    }
-    [data-testid="stHorizontalBlock"] > div:nth-child(2),
-    [data-testid="stHorizontalBlock"] > div:nth-child(3) {
-        flex: 0 0 20% !important;
-        width: 20% !important;
-    }
-    [data-testid="stHorizontalBlock"] > div:nth-child(1) {
-        flex: 0 0 60% !important;
-        width: 60% !important;
-        min-width: 0 !important;
-    }
-    </style>
-    """
-    st.markdown(row_style, unsafe_allow_html=True)
+    edited = st.data_editor(
+        selection_data,
+        column_config={
+            "Player": st.column_config.TextColumn(disabled=True),
+            "Play": st.column_config.CheckboxColumn(),
+            "GK": st.column_config.CheckboxColumn(),
+        },
+        hide_index=True,
+        use_container_width=True,
+    )
 
-    # Header row
-    header = st.columns([1, 1, 1])
-    header[0].markdown("**Player**")
-    header[1].markdown("**Play**")
-    header[2].markdown("**GK**")
+    for _, row in edited.iterrows():
+        st.session_state[f"play_{row['Player']}"] = bool(row["Play"])
+        st.session_state[f"gk_{row['Player']}"] = bool(row["GK"]) and bool(row["Play"])
 
-    for player in st.session_state.all_players:
-
-        # A container ensures the row stays aligned
-        with st.container():
-            cols = st.columns([1, 1, 1])
-
-            with cols[0]:
-                st.markdown(f"<div class='check-row'>{player}</div>", unsafe_allow_html=True)
-
-            with cols[1]:
-                play_key = f"play_{player}"
-                play_checked = st.checkbox("", key=play_key)
-
-            with cols[2]:
-                gk_key = f"gk_{player}"
-                gk_checked = st.checkbox(
-                    "",
-                    key=gk_key,
-                    disabled=not play_checked
-                )
-
-            if play_checked:
-                active_players.append(player)
-            if gk_checked:
-                gk_names.append(player)
+    active_players = edited[edited["Play"]]["Player"].tolist()
+    gk_names = edited[edited["GK"] & edited["Play"]]["Player"].tolist()
 
     # -----------------------------
     # Counter (how many players selected)
