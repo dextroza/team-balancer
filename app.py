@@ -122,63 +122,44 @@ def main():
     # -----------------------------
     st.subheader("Step 1 & 2: Select active players and goalkeepers")
 
-    if "player_df" not in st.session_state:
-        st.session_state.player_df = pd.DataFrame({
-            "Player": st.session_state.all_players,
-            "Play": [False] * len(st.session_state.all_players),
-            "GK": [False] * len(st.session_state.all_players),
-        })
-    else:
-        # Remove rows not in all_players (cleanup stale/empty rows)
-        st.session_state.player_df = st.session_state.player_df[
-            st.session_state.player_df["Player"].isin(st.session_state.all_players)
-        ].reset_index(drop=True)
-        # Add any new players
-        existing = set(st.session_state.player_df["Player"].tolist())
-        new_players = [p for p in st.session_state.all_players if p not in existing]
-        if new_players:
-            new_rows = pd.DataFrame({
-                "Player": new_players,
-                "Play": [False] * len(new_players),
-                "GK": [False] * len(new_players),
-            })
-            st.session_state.player_df = pd.concat([st.session_state.player_df, new_rows], ignore_index=True)
-
-    def save_player_selections():
-        if "player_editor" in st.session_state:
-            for row_idx, changes in st.session_state["player_editor"].get("edited_rows", {}).items():
-                for col, val in changes.items():
-                    st.session_state.player_df.at[int(row_idx), col] = val
-
-    if "player_editor" in st.session_state:
-        del st.session_state["player_editor"]
+    for p_name in st.session_state.all_players:
+        if f"cb_play_{p_name}" not in st.session_state:
+            st.session_state[f"cb_play_{p_name}"] = False
+        if f"cb_gk_{p_name}" not in st.session_state:
+            st.session_state[f"cb_gk_{p_name}"] = False
 
     st.markdown("""
     <style>
-    .ag-cell { cursor: pointer !important; }
-    .ag-cell-value input[type="checkbox"] { width: 20px !important; height: 20px !important; cursor: pointer !important; }
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+    }
+    [data-testid="stHorizontalBlock"] > div {
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+    }
+    [data-testid="stHorizontalBlock"] p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    row_height = 35
-    header_height = 38
-    st.data_editor(
-        st.session_state.player_df,
-        key="player_editor",
-        on_change=save_player_selections,
-        column_config={
-            "Player": st.column_config.TextColumn(disabled=True),
-            "Play": st.column_config.CheckboxColumn(width="small"),
-            "GK": st.column_config.CheckboxColumn(width="small"),
-        },
-        hide_index=True,
-        use_container_width=True,
-        num_rows="fixed",
-        height=header_height + row_height * len(st.session_state.player_df),
-    )
+    _, h2, h3 = st.columns([1, 1, 1])
+    h2.markdown("**Play**")
+    h3.markdown("**GK**")
 
-    active_players = st.session_state.player_df[st.session_state.player_df["Play"]]["Player"].tolist()
-    gk_names = st.session_state.player_df[st.session_state.player_df["GK"] & st.session_state.player_df["Play"]]["Player"].tolist()
+    for p_name in st.session_state.all_players:
+        c1, c2, c3 = st.columns([1, 1, 1])
+        c1.markdown(p_name)
+        with c2:
+            st.toggle("", key=f"cb_play_{p_name}", label_visibility="collapsed")
+        with c3:
+            st.toggle("", key=f"cb_gk_{p_name}", label_visibility="collapsed")
+
+    active_players = [p for p in st.session_state.all_players if st.session_state.get(f"cb_play_{p}", False)]
+    gk_names = [p for p in active_players if st.session_state.get(f"cb_gk_{p}", False)]
 
     # -----------------------------
     # Counter (how many players selected)
