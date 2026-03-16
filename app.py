@@ -133,6 +133,7 @@ def main():
     [data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         align-items: center !important;
+        gap: 8px !important;
     }
     [data-testid="stHorizontalBlock"] > div {
         min-width: 0 !important;
