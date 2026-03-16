@@ -220,7 +220,7 @@ def main():
                 st.markdown(f"{p['rating']:.2f}")
             with c3:
                 btn_key = f"{session_team_name}_move_{idx}_{name}"
-                if st.button("Move", key=btn_key):
+                if st.button("↔️", key=btn_key):
                     # Apply move immediately
                     if name in st.session_state[session_team_name]:
                         st.session_state[session_team_name].remove(name)
