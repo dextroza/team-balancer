@@ -127,6 +127,8 @@ def main():
             st.session_state[f"cb_play_{p_name}"] = False
         if f"cb_gk_{p_name}" not in st.session_state:
             st.session_state[f"cb_gk_{p_name}"] = False
+        if f"rating_{p_name}" not in st.session_state:
+            st.session_state[f"rating_{p_name}"] = float(st.session_state.player_dict[p_name]["rating"])
 
     st.markdown("""
     <style>
@@ -147,17 +149,20 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    _, h2, h3 = st.columns([1, 1, 1])
+    _, h2, h3, h4 = st.columns([4, 1, 1, 2])
     h2.markdown("**Play**")
     h3.markdown("**GK**")
+    h4.markdown("**Rating**")
 
     for p_name in st.session_state.all_players:
-        c1, c2, c3 = st.columns([1, 1, 1])
+        c1, c2, c3, c4 = st.columns([4, 1, 1, 2])
         c1.markdown(p_name)
         with c2:
             st.toggle("", key=f"cb_play_{p_name}", label_visibility="collapsed")
         with c3:
             st.toggle("", key=f"cb_gk_{p_name}", label_visibility="collapsed")
+        with c4:
+            st.number_input("", key=f"rating_{p_name}", min_value=0.0, max_value=100.0, step=1.0, format="%.0f", label_visibility="collapsed")
 
     active_players = [p for p in st.session_state.all_players if st.session_state.get(f"cb_play_{p}", False)]
     gk_names = [p for p in active_players if st.session_state.get(f"cb_gk_{p}", False)]
@@ -181,8 +186,17 @@ def main():
         st.warning("Too many goalkeepers selected. Uncheck until exactly 2 remain.")
         st.stop()
 
-    # Convert active players into dict format (same as before)
-    active_player_dicts = [p for p in st.session_state.players if p["name"] in active_players]
+    # Apply any rating overrides from the UI
+    for p_name in st.session_state.all_players:
+        new_rating = st.session_state.get(f"rating_{p_name}")
+        if new_rating is not None:
+            st.session_state.player_dict[p_name]["rating"] = new_rating
+
+    # Convert active players into dict format with updated ratings
+    active_player_dicts = [
+        {"name": p["name"], "rating": st.session_state.player_dict[p["name"]]["rating"]}
+        for p in st.session_state.players if p["name"] in active_players
+    ]
 
     # -----------------------------
     # Shuffle / create teams
