@@ -154,13 +154,17 @@ def main():
     h3.markdown("**GK**")
     h4.markdown("**Rating**")
 
+    def on_gk_change(p_name):
+        if st.session_state.get(f"cb_gk_{p_name}", False):
+            st.session_state[f"cb_play_{p_name}"] = True
+
     for p_name in st.session_state.all_players:
         c1, c2, c3, c4 = st.columns([4, 1, 1, 2])
         c1.markdown(p_name)
         with c2:
             st.toggle("", key=f"cb_play_{p_name}", label_visibility="collapsed")
         with c3:
-            st.toggle("", key=f"cb_gk_{p_name}", label_visibility="collapsed")
+            st.toggle("", key=f"cb_gk_{p_name}", label_visibility="collapsed", on_change=on_gk_change, args=(p_name,))
         with c4:
             st.number_input("", key=f"rating_{p_name}", min_value=0.0, max_value=100.0, step=1.0, format="%.0f", label_visibility="collapsed")
 
